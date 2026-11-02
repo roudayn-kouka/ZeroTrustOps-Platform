@@ -1,0 +1,8 @@
+.git
+sectl/bin/
+node_modules/
+dist/
+platform/api/tests/
+__pycache__/
+*.pyc
+.env

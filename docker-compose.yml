@@ -1,0 +1,79 @@
+services:
+
+  # ── PostgreSQL Database ────────────────────────────────────────────────────
+  db:
+    image: postgres:16-alpine
+    container_name: zerotrust-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-zerotrust}
+      POSTGRES_USER: ${POSTGRES_USER:-zerotrust}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Run setup.sh to create the local .env file}
+    volumes:
+      - db_data:/var/lib/postgresql/data
+      - ./platform/db/init.sql:/docker-entrypoint-initdb.d/init.sql
+    ports:
+      - "127.0.0.1:5433:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U \"$${POSTGRES_USER}\" -d \"$${POSTGRES_DB}\""]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - zerotrust-net
+
+  # ── FastAPI Backend ────────────────────────────────────────────────────────
+  api:
+    build:
+      context: .
+      dockerfile: platform/api/Dockerfile
+    image: zerotrust-api:latest
+    container_name: zerotrust-api
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:8000:8000"
+    environment:
+      DATABASE_URL: "postgresql://${POSTGRES_USER:-zerotrust}:${POSTGRES_PASSWORD:?Run setup.sh to create the local .env file}@db:5432/${POSTGRES_DB:-zerotrust}"
+      PLATFORM_API_KEY: ${PLATFORM_API_KEY:?Run setup.sh to create the local .env file}
+      GITHUB_WEBHOOK_SECRET: ${GITHUB_WEBHOOK_SECRET:?Run setup.sh to create the local .env file}
+      SECTL_PATH: /usr/local/bin/sectl
+    volumes:
+      # Mount workspace for scanning cloned repos
+      - scan_workspace:/workspace
+      # Required by the Gitleaks container used for secret scanning.
+      - /var/run/docker.sock:/var/run/docker.sock
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - zerotrust-net
+    healthcheck:
+      test: ["CMD", "curl", "-sf", "http://localhost:8000/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  # ── React Frontend ─────────────────────────────────────────────────────────
+  web:
+    build:
+      context: .
+      dockerfile: platform/web/Dockerfile
+    image: zerotrust-web:latest
+    container_name: zerotrust-web
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:3000:80"
+    depends_on:
+      api:
+        condition: service_healthy
+    networks:
+      - zerotrust-net
+
+networks:
+  zerotrust-net:
+    driver: bridge
+
+volumes:
+  db_data:
+  scan_workspace:
