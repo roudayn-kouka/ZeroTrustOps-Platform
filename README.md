@@ -1,393 +1,322 @@
-# ZeroTrustOps Platform
+<div align="center">
 
-A self-hosted DevSecOps platform that scans every Git push and blocks security misconfigurations, hardcoded secrets, and infrastructure vulnerabilities before they reach production.
+# 🛡️ ZeroTrustOps Platform
 
-**Maintainer:** Roudayna Kouka. The existing copyright notice in [LICENSE](LICENSE) is retained.
+### Every `git push` is a security checkpoint.
 
-![Version](https://img.shields.io/badge/version-1.0.0-blue?style=flat-square)
-![License](https://img.shields.io/badge/license-MIT-green?style=flat-square)
-![Go](https://img.shields.io/badge/Go-1.21+-00ADD8?style=flat-square&logo=go&logoColor=white)
-![Python](https://img.shields.io/badge/Python-3.11+-3776AB?style=flat-square&logo=python&logoColor=white)
-![React](https://img.shields.io/badge/React-18+-61DAFB?style=flat-square&logo=react&logoColor=black)
-![Docker](https://img.shields.io/badge/Docker-Compose-2496ED?style=flat-square&logo=docker&logoColor=white)
-![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-336791?style=flat-square&logo=postgresql&logoColor=white)
+A self-hosted DevSecOps platform that scans each push for IaC misconfigurations and hardcoded secrets,<br/>
+then returns a clear **PASS / FAIL** verdict before anything reaches production.
 
----
+<br/>
 
-## Table of Contents
+![Go](https://img.shields.io/badge/Go-1.21+-00ADD8?style=for-the-badge&logo=go&logoColor=white)
+![Python](https://img.shields.io/badge/FastAPI-Python_3.11-009688?style=for-the-badge&logo=fastapi&logoColor=white)
+![React](https://img.shields.io/badge/React_18-Vite-61DAFB?style=for-the-badge&logo=react&logoColor=black)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-336791?style=for-the-badge&logo=postgresql&logoColor=white)
+![Docker](https://img.shields.io/badge/Docker-Compose-2496ED?style=for-the-badge&logo=docker&logoColor=white)
+![Kubernetes](https://img.shields.io/badge/Kyverno-Policies-326CE5?style=for-the-badge&logo=kubernetes&logoColor=white)
+![License](https://img.shields.io/badge/License-MIT-22C55E?style=for-the-badge)
 
-- [Screenshots](#screenshots)
-- [Overview](#overview)
-- [How It Works](#how-it-works)
-- [Architecture](#architecture)
-- [SecTL — Security Enforcement Engine](#sectl--security-enforcement-engine)
-- [Quick Start](#quick-start)
-- [GitHub Webhook Integration](#github-webhook-integration)
-- [REST API Reference](#rest-api-reference)
-- [Kyverno Admission Control Policies](#kyverno-admission-control-policies)
-- [Database Schema](#database-schema)
-- [Configuration](#configuration)
-- [Running Tests](#running-tests)
-- [Project Structure](#project-structure)
-- [Roadmap](#roadmap)
-- [Contributing](#contributing)
-- [License](#license)
+<br/>
+
+[**Quick Start**](#-quick-start) · [**Screenshots**](#-screenshots) · [**How It Works**](#-how-it-works) · [**SecTL CLI**](#-sectl--the-security-engine) · [**API**](#-rest-api) · [**Roadmap**](#-roadmap)
+
+<br/>
+
+<img src="screenshots/DashboardView.png" alt="ZeroTrustOps dashboard" width="90%"/>
+
+</div>
 
 ---
 
-## Screenshots
+## ✨ Highlights
 
-**Dashboard**
+<table>
+<tr>
+<td width="50%" valign="top">
 
-![Dashboard Overview](screenshots/DashboardView.png)
+### 🔍 Scan
+- **70+ built-in rules** for Kubernetes, Terraform and Helm
+- **Secrets detection** with Gitleaks (API keys, tokens, passwords)
+- **Supply-chain checks**: `:latest` tags, unpinned digests, EOL images
+- **Live AWS posture** audit (root keys, MFA, password policy, S3)
 
-Real-time overview of connected repositories, scan history, and security posture.
+</td>
+<td width="50%" valign="top">
 
-**Repository Management**
+### 🚦 Enforce
+- **Binary PASS / FAIL gate** with severity thresholds
+- **Kyverno admission policies** that block non-compliant workloads
+- **SARIF / JSON output** for CI pipelines and GitHub Security
+- **Remediation guidance** attached to every finding
 
-![Repository Management](screenshots/repoDashboardView.png)
+</td>
+</tr>
+<tr>
+<td width="50%" valign="top">
 
-Add, remove, and monitor repositories. Each is automatically webhook-connected to the scan pipeline.
+### ⚡ Automate
+- **GitHub webhook** triggers a scan on every push
+- **HMAC-signed deliveries**; invalid signatures are rejected
+- **Manual trigger** from the dashboard or the REST API
 
-![Repositories](screenshots/repo.png)
+</td>
+<td width="50%" valign="top">
 
-Per-repository scan summary with status indicators and quick-action controls.
+### 📊 Visualize
+- **Real-time dashboard** of repositories and scan history
+- **Severity breakdown** from CRITICAL to LOW
+- **One command** to install: `bash setup.sh`
 
-**Scan Results**
-
-![Scan History](screenshots/scanDashboardView.png)
-
-Scan history list with PASS/FAIL status, timestamps, and scan type breakdown.
-
-![Scan Findings](screenshots/scanResult1.png)
-
-Detailed findings view showing rule ID, severity, file path, description, and remediation guidance per violation.
-
-![Scan Summary](screenshots/scanResultDashboardView.png)
-
-High-level scan result summary grouped by severity (CRITICAL to LOW) with finding counts.
-
-**Triggering a Scan**
-
-![Scan Trigger](screenshots/scanTrigger.png)
-
-Manually trigger a scan from the dashboard, or let the GitHub webhook fire it automatically on every push.
-
----
-
-## Overview
-
-ZeroTrustOps treats every Git push as a security checkpoint. Powered by a custom static analysis engine (SecTL) and Gitleaks for secrets detection, it provides an end-to-end DevSecOps pipeline with automated scanning, CI/CD enforcement, and a real-time dashboard — all running locally from a single command.
-
-**What the platform enforces:**
-
-- Blocks insecure Kubernetes deployments before they reach the cluster
-- Detects hardcoded credentials and secrets on every push
-- Fails CI instantly on critical findings with a binary PASS/FAIL gate
-- Enforces security policies at admission time using Kyverno
-- Scans IaC across Kubernetes, Terraform, Helm, and container images
-- Surfaces actionable remediation guidance per finding, not just raw logs
+</td>
+</tr>
+</table>
 
 ---
 
-## How It Works
+## 📸 Screenshots
 
-Every push flows through the following pipeline:
+<table>
+<tr>
+<td align="center" width="50%">
+<img src="screenshots/repoDashboardView.png" alt="Repository management"/><br/>
+<b>Repository management</b><br/>
+<sub>Add, remove and monitor repositories connected to the scan pipeline.</sub>
+</td>
+<td align="center" width="50%">
+<img src="screenshots/repo.png" alt="Repositories"/><br/>
+<b>Per-repository summary</b><br/>
+<sub>Status indicators and quick actions for each repository.</sub>
+</td>
+</tr>
+<tr>
+<td align="center" width="50%">
+<img src="screenshots/scanDashboardView.png" alt="Scan history"/><br/>
+<b>Scan history</b><br/>
+<sub>PASS / FAIL status, timestamps and scan type for every run.</sub>
+</td>
+<td align="center" width="50%">
+<img src="screenshots/scanResultDashboardView.png" alt="Scan summary"/><br/>
+<b>Scan summary</b><br/>
+<sub>Findings grouped by severity, from CRITICAL to LOW.</sub>
+</td>
+</tr>
+<tr>
+<td align="center" width="50%">
+<img src="screenshots/scanResult1.png" alt="Scan findings"/><br/>
+<b>Detailed findings</b><br/>
+<sub>Rule ID, severity, file path, description and remediation.</sub>
+</td>
+<td align="center" width="50%">
+<img src="screenshots/scanTrigger.png" alt="Scan trigger"/><br/>
+<b>Triggering a scan</b><br/>
+<sub>Start a scan manually, or let the GitHub webhook do it on push.</sub>
+</td>
+</tr>
+</table>
 
-```
-git push
-  └── GitHub webhook triggers the scan pipeline
-        └── Repository is cloned into an isolated scan environment
-              |
-              |-- Static Analysis (SecTL)
-              |     |-- Scans IaC: Kubernetes, Terraform, Helm
-              |     |-- Detects misconfigurations (RBAC, networking, privilege escalation)
-              |     |-- Applies 70+ security rules
-              |     └-- Assigns severity levels (CRITICAL -> LOW)
-              |
-              |-- Secrets Detection (Gitleaks)
-              |     └-- Identifies API keys, tokens, passwords, exposed credentials
-              |
-              |-- Findings Processing
-              |     |-- Normalizes results (rule_id, severity, file path)
-              |     |-- Deduplicates issues
-              |     └-- Attaches remediation guidance per finding
-              |
-              |-- Enforcement Engine (CI/CD Gate)
-              |     |-- Evaluates findings against severity thresholds
-              |     └-- Returns binary decision: PASS / FAIL
-              |
-              |-- Persistence Layer
-              |     └-- Stores scan results, history, and findings in PostgreSQL
-              |
-              └-- Real-time Feedback Loop
-                    |-- Updates dashboard instantly
-                    |-- Displays per-repo PASS / FAIL status
-                    |-- Shows severity breakdown
-                    └-- Provides actionable fixes per finding
+---
+
+## 🔄 How It Works
+
+```mermaid
+flowchart LR
+    A[👩‍💻 git push] --> B[GitHub webhook<br/>HMAC verified]
+    B --> C[Clone into isolated<br/>scan workspace]
+    C --> D[SecTL<br/>IaC analysis]
+    C --> E[Gitleaks<br/>secrets detection]
+    D --> F[Normalize · deduplicate<br/>attach remediation]
+    E --> F
+    F --> G{Severity gate}
+    G -->|no blocking findings| H[✅ PASS]
+    G -->|critical findings| I[❌ FAIL]
+    H --> J[(PostgreSQL)]
+    I --> J
+    J --> K[📊 Dashboard]
 ```
 
 If a push fails the security gate, it does not deploy.
 
 ---
 
-## Architecture
+## 🏗️ Architecture
 
-| Component        | Technology       | Role                                               |
-|------------------|------------------|----------------------------------------------------|
-| SecTL CLI        | Go 1.21+         | Custom static analysis engine with 70+ built-in rules |
-| Platform API     | Python / FastAPI | Webhook receiver, scan orchestrator, REST API      |
-| Dashboard        | React + Vite     | Real-time scan results and repository management   |
-| Database         | PostgreSQL 16    | Persistent storage for repos, scans, and findings  |
-| Secrets Scanner  | Gitleaks         | Detects hardcoded secrets and credentials          |
-
-All services run in Docker Compose and communicate over an internal bridge network.
+| Component       | Technology        | Role                                                   |
+|-----------------|-------------------|--------------------------------------------------------|
+| **SecTL CLI**   | Go 1.21+          | Static analysis engine with 70+ built-in rules         |
+| **Platform API**| Python · FastAPI  | Webhook receiver, scan orchestrator, REST API          |
+| **Dashboard**   | React 18 · Vite   | Repository management and scan results                 |
+| **Database**    | PostgreSQL 16     | Repositories, scans and findings                       |
+| **Secrets**     | Gitleaks          | Hardcoded secret and credential detection              |
 
 ```
-+------------------------------------------------------------+
-|                    Docker Compose Network                  |
-|                                                            |
-|  +--------------+    +--------------+    +-------------+  |
-|  |  React       |    |  FastAPI     |    | PostgreSQL  |  |
-|  |  Dashboard   |<-->|  Backend     |<-->|    16       |  |
-|  |  :3000       |    |  :8000       |    |  :5432      |  |
-|  +--------------+    +------+-------+    +-------------+  |
-|                             |                             |
-|                    +--------v--------+                    |
-|                    |   SecTL CLI     |                    |
-|                    |   + Gitleaks    |                    |
-|                    +-----------------+                    |
-+------------------------------------------------------------+
-                             ^
-                             |  GitHub Webhook (ngrok tunnel)
-                             |
-                       +-----+------+
-                       |  GitHub    |
-                       |  Repos     |
-                       +------------+
+┌──────────────────────── Docker Compose network ────────────────────────┐
+│                                                                        │
+│   ┌──────────────┐       ┌──────────────┐       ┌──────────────┐       │
+│   │   Dashboard  │ ◄───► │  FastAPI     │ ◄───► │ PostgreSQL   │       │
+│   │   :3000      │       │  :8000       │       │ :5433        │       │
+│   └──────────────┘       └──────┬───────┘       └──────────────┘       │
+│                                 │                                      │
+│                        ┌────────▼────────┐                             │
+│                        │ SecTL + Gitleaks│                             │
+│                        └─────────────────┘                             │
+└────────────────────────────────▲───────────────────────────────────────┘
+                                 │ GitHub webhook (via ngrok)
+                           ┌─────┴─────┐
+                           │  GitHub   │
+                           └───────────┘
 ```
 
 ---
 
-## SecTL — Security Enforcement Engine
+## 🚀 Quick Start
 
-SecTL is a purpose-built CLI written in Go. It scans Infrastructure-as-Code files for security misconfigurations and produces a binary PASS/FAIL exit code suitable for CI/CD gate use.
-
-### Scan Types
-
-| Type         | Target                 | Coverage                                                           |
-|--------------|------------------------|--------------------------------------------------------------------|
-| `k8s`        | Kubernetes manifests   | Pods, Deployments, RBAC, Ingress, ConfigMaps, ServiceAccounts      |
-| `terraform`  | Infrastructure as Code | AWS, GCP, Azure — S3, IAM, Security Groups, RDS, EKS, CloudTrail  |
-| `helm`       | Helm charts            | Chart.yaml, values.yaml, rendered templates                        |
-| `posture`    | Live AWS account       | IAM root keys, MFA enforcement, password policy, S3 posture        |
-| `supply-chain` | Container images     | Digest pinning, `:latest` tag detection, EOL base images           |
-
-### Security Rules
-
-**Kubernetes — Critical and High**
-
-| Rule ID  | Severity | Description                                            |
-|----------|----------|--------------------------------------------------------|
-| K8S-001  | CRITICAL | `hostPID` enabled — container sees all host processes  |
-| K8S-004  | CRITICAL | Privileged container — full host device access         |
-| K8S-020  | CRITICAL | RBAC wildcard `apiGroups` (`*`)                        |
-| K8S-024  | CRITICAL | Binding to `cluster-admin` role                        |
-| K8S-025  | CRITICAL | Binding to unauthenticated or anonymous subject        |
-| K8S-031  | HIGH     | Hardcoded secret in environment variable               |
-| K8S-005  | HIGH     | `allowPrivilegeEscalation` not set to `false`          |
-
-**Terraform — Critical and High**
-
-| Rule ID    | Severity | Description                                        |
-|------------|----------|----------------------------------------------------|
-| TF-S3-010  | CRITICAL | S3 bucket ACL set to public                        |
-| TF-IAM-001 | CRITICAL | IAM policy allows `Action: *` (all actions)        |
-| TF-SG-001  | CRITICAL | Security group: sensitive port open to internet    |
-| TF-RDS-002 | CRITICAL | RDS instance publicly accessible                   |
-| TF-EKS-002 | HIGH     | EKS API server publicly accessible                 |
-
-Full rule list: run `sectl rules`. Filter with `--source k8s`, `--source terraform`, or `--severity critical`.
-
-### CLI Usage
+**Prerequisites:** Docker 24+ with Compose v2, Go 1.21+, Git.
 
 ```bash
-# Scan Kubernetes manifests
-sectl scan ./manifests --type k8s
-
-# Scan Terraform and fail CI on HIGH severity or above
-sectl scan ./infra --type terraform --severity high --fail-on-findings
-
-# Scan a Helm chart
-sectl scan ./charts/myapp --type helm
-
-# Verify container images for digest pinning, EOL, and latest tag
-sectl verify nginx:latest myapp:1.0.0
-
-# Audit live AWS account posture
-sectl audit --provider aws --region us-east-1
-
-# JSON output for programmatic use
-sectl scan ./manifests --type k8s --output json
-
-# SARIF output for GitHub Security tab
-sectl scan ./manifests --type k8s --output sarif
-```
-
----
-
-## Quick Start
-
-### Prerequisites
-
-| Dependency     | Minimum Version | Notes                       |
-|----------------|-----------------|-----------------------------|
-| Docker         | 24+             | With Docker Compose plugin  |
-| Docker Compose | 2.x             | Bundled with Docker Desktop |
-| Go             | 1.21+           | Required to compile SecTL   |
-| Git            | Any             |                             |
-
-### Installation
-
-```bash
-# Clone the repository
 git clone https://github.com/roudayn-kouka/ZeroTrustOps-Platform.git
 cd ZeroTrustOps-Platform
-
-# Run the one-command installer
 bash setup.sh
 ```
 
-The `setup.sh` script will:
+`setup.sh` checks prerequisites, compiles `sectl`, generates a `.env` with random secrets, builds the containers and waits for health checks.
 
-1. Verify all prerequisites are installed
-2. Compile the SecTL binary from source
-3. Build and start all Docker containers
-4. Wait for all services to pass health checks
+| Service        | URL                                                   |
+|----------------|-------------------------------------------------------|
+| Dashboard      | <http://localhost:3000>                               |
+| API            | <http://localhost:8000>                               |
+| Swagger docs   | <http://localhost:8000/docs>                          |
 
-### Service Access
+The dashboard asks for `PLATFORM_API_KEY` (from `.env`) at sign-in.
 
-| Service       | URL                          | Description              |
-|---------------|------------------------------|--------------------------|
-| Dashboard     | http://localhost:3000        | React UI — main interface |
-| API           | http://localhost:8000        | FastAPI backend          |
-| API Reference | http://localhost:8000/docs   | Swagger / OpenAPI docs   |
-
-### Uninstall
+To remove everything (containers, volumes, images, networks and the `sectl` binary; source code is kept):
 
 ```bash
 bash uninstall.sh
 ```
 
-Removes all containers, volumes, images, networks, and the `sectl` binary. Source code is not affected.
+---
+
+## 🧰 SecTL — the Security Engine
+
+SecTL is a Go CLI that scans Infrastructure-as-Code and exits non-zero on findings, so it drops straight into any CI pipeline.
+
+### Scan types
+
+| Type           | Target                 | Coverage                                                          |
+|----------------|------------------------|-------------------------------------------------------------------|
+| `k8s`          | Kubernetes manifests   | Pods, Deployments, RBAC, Ingress, ConfigMaps, ServiceAccounts     |
+| `terraform`    | Infrastructure as Code | AWS, GCP, Azure: S3, IAM, Security Groups, RDS, EKS, CloudTrail   |
+| `helm`         | Helm charts            | `Chart.yaml`, `values.yaml`, rendered templates                   |
+| `posture`      | Live AWS account       | IAM root keys, MFA, password policy, S3 posture                   |
+| `supply-chain` | Container images       | Digest pinning, `:latest` detection, EOL base images              |
+
+### Usage
+
+```bash
+sectl scan ./manifests --type k8s                                   # Kubernetes
+sectl scan ./infra --type terraform --severity high --fail-on-findings  # CI gate
+sectl scan ./charts/myapp --type helm                               # Helm
+sectl verify nginx:latest myapp:1.0.0                               # Supply chain
+sectl audit --provider aws --region us-east-1                       # AWS posture
+sectl scan ./manifests --type k8s --output sarif                    # SARIF / json / table
+sectl rules --source k8s --severity critical                        # List rules
+```
+
+<details>
+<summary><b>Sample critical and high rules</b></summary>
+
+<br/>
+
+| Rule ID      | Severity    | Description                                            |
+|--------------|-------------|--------------------------------------------------------|
+| `K8S-001`    | 🔴 CRITICAL | `hostPID` enabled: container sees all host processes   |
+| `K8S-004`    | 🔴 CRITICAL | Privileged container: full host device access          |
+| `K8S-020`    | 🔴 CRITICAL | RBAC wildcard `apiGroups` (`*`)                        |
+| `K8S-024`    | 🔴 CRITICAL | Binding to `cluster-admin` role                        |
+| `K8S-025`    | 🔴 CRITICAL | Binding to an unauthenticated or anonymous subject     |
+| `K8S-005`    | 🟠 HIGH     | `allowPrivilegeEscalation` not set to `false`          |
+| `K8S-031`    | 🟠 HIGH     | Hardcoded secret in an environment variable            |
+| `TF-S3-010`  | 🔴 CRITICAL | S3 bucket ACL set to public                            |
+| `TF-IAM-001` | 🔴 CRITICAL | IAM policy allows `Action: *`                          |
+| `TF-SG-001`  | 🔴 CRITICAL | Sensitive port open to the internet                    |
+| `TF-RDS-002` | 🔴 CRITICAL | RDS instance publicly accessible                       |
+| `TF-EKS-002` | 🟠 HIGH     | EKS API server publicly accessible                     |
+
+Run `sectl rules` for the full list.
+
+</details>
 
 ---
 
-## GitHub Webhook Integration
+## 🔗 GitHub Webhook
 
 ```bash
-# Expose the platform publicly via ngrok
 ngrok http 3000
 ```
 
-In your GitHub repository, navigate to **Settings > Webhooks > Add webhook** and configure:
+In your repository, open **Settings → Webhooks → Add webhook**:
 
-| Field        | Value                                         |
-|--------------|-----------------------------------------------|
-| Payload URL  | `https://<your-ngrok-url>/webhook/github`     |
-| Content type | `application/json`                            |
-| Secret       | Value of `GITHUB_WEBHOOK_SECRET` in `.env`    |
-| Events       | Push events                                   |
+| Field        | Value                                          |
+|--------------|------------------------------------------------|
+| Payload URL  | `https://<your-ngrok-url>/webhook/github`      |
+| Content type | `application/json`                             |
+| Secret       | `GITHUB_WEBHOOK_SECRET` from `.env`            |
+| Events       | Push events                                    |
 
-Every subsequent `git push` will automatically trigger a full scan.
+Every following `git push` triggers a full scan.
 
 ---
 
-## REST API Reference
+## 📡 REST API
 
-| Method | Endpoint              | Description                         | Auth |
-|--------|-----------------------|-------------------------------------|------|
-| GET    | `/health`             | Health check — all services         | —    |
-| GET    | `/api/stats`          | Dashboard overview counts           | API key |
-| GET    | `/api/repos`          | List all connected repositories     | API key |
-| POST   | `/api/repos`          | Add a new repository                | API key |
-| DELETE | `/api/repos/:id`      | Remove a repository                 | API key |
-| GET    | `/api/scans`          | List recent scans                   | API key |
-| GET    | `/api/scans/:id`      | Scan detail with all findings       | API key |
-| POST   | `/api/scans/trigger`  | Manually trigger a scan             | API key |
-| POST   | `/webhook/github`     | GitHub push webhook receiver        | HMAC |
-
-### Examples
-
-**Trigger a scan:**
+| Method   | Endpoint              | Description                       | Auth     |
+|----------|-----------------------|-----------------------------------|----------|
+| `GET`    | `/health`             | Health check                      | —        |
+| `GET`    | `/api/stats`          | Dashboard counters                | API key  |
+| `GET`    | `/api/repos`          | List repositories                 | API key  |
+| `POST`   | `/api/repos`          | Add a repository                  | API key  |
+| `DELETE` | `/api/repos/{id}`     | Remove a repository               | API key  |
+| `GET`    | `/api/scans`          | List recent scans                 | API key  |
+| `GET`    | `/api/scans/{id}`     | Scan detail with findings         | API key  |
+| `POST`   | `/api/scans/trigger`  | Trigger a scan                    | API key  |
+| `POST`   | `/webhook/github`     | GitHub push receiver              | HMAC     |
 
 ```bash
+# Trigger a scan
 curl -X POST http://localhost:8000/api/scans/trigger \
-  -H "X-API-Key: <PLATFORM_API_KEY>" \
-  -H "Content-Type: application/json" \
+  -H "X-API-Key: $PLATFORM_API_KEY" -H "Content-Type: application/json" \
   -d '{"repo_full_name": "owner/repo"}'
-```
 
-**Get critical findings from a scan:**
-
-```bash
-curl -H "X-API-Key: <PLATFORM_API_KEY>" \
-  http://localhost:8000/api/scans/42 | jq '.findings[] | select(.severity == "CRITICAL")'
+# Critical findings of scan 42
+curl -H "X-API-Key: $PLATFORM_API_KEY" http://localhost:8000/api/scans/42 \
+  | jq '.findings[] | select(.severity == "CRITICAL")'
 ```
 
 ---
 
-## Kyverno Admission Control Policies
+## ☸️ Kyverno Admission Policies
 
-Three cluster-wide admission control policies are included. All run in `Enforce` mode and actively block non-compliant resources from entering the cluster.
+Three cluster-wide policies in `Enforce` mode block non-compliant resources at admission time.
 
-| Policy                    | Mode    | Enforcement                                                        |
-|---------------------------|---------|--------------------------------------------------------------------|
-| `disallow-latest-tag`     | Enforce | Blocks containers using `:latest` or untagged images               |
-| `disallow-privileged`     | Enforce | Blocks privileged containers, privilege escalation, host namespaces |
-| `require-resource-limits` | Enforce | Requires CPU and memory requests and limits on all containers      |
+| Policy                    | Blocks                                                             |
+|---------------------------|--------------------------------------------------------------------|
+| `disallow-latest-tag`     | Containers using `:latest` or untagged images                      |
+| `disallow-privileged`     | Privileged containers, privilege escalation, host namespaces       |
+| `require-resource-limits` | Containers without CPU and memory requests and limits              |
 
 ```bash
-# Apply all Kyverno policies to your cluster
 kubectl apply -f manifests/kyverno-policies/
-
-# Verify policies are active
 kubectl get clusterpolicy
 ```
 
 ---
 
-## Database Schema
+## ⚙️ Configuration
 
-```
-organizations
-    └── repositories
-            └── scans
-                    └── findings
-```
-
-Each `finding` record stores:
-
-| Field         | Type | Description                               |
-|---------------|------|-------------------------------------------|
-| `tool`        | text | `sectl` or `gitleaks`                     |
-| `rule_id`     | text | e.g. `K8S-001`, `TF-IAM-001`              |
-| `severity`    | text | `CRITICAL`, `HIGH`, `MEDIUM`, `LOW`       |
-| `category`    | text | e.g. `rbac`, `network`, `secrets`         |
-| `title`       | text | Short rule description                    |
-| `description` | text | Full violation explanation                |
-| `file_path`   | text | Relative path to the affected file        |
-| `remediation` | text | Steps to fix the violation                |
-
----
-
-## Configuration
-
-`bash setup.sh` creates a `.env` file with random database, API, and webhook secrets on first run. For manual setup, copy `.env.example` to `.env` and replace each placeholder:
+`setup.sh` generates `.env` on first run. For a manual setup, copy `.env.example` to `.env` and replace every placeholder with a random value of at least 32 characters:
 
 ```env
-# Copy .env.example to .env, then replace each change-me value with a unique
-# random value of at least 32 characters before starting Docker Compose.
 POSTGRES_USER=zerotrust
 POSTGRES_DB=zerotrust
 POSTGRES_PASSWORD=<random-secret>
@@ -395,154 +324,103 @@ PLATFORM_API_KEY=<random-secret>
 GITHUB_WEBHOOK_SECRET=<random-secret>
 ```
 
-The dashboard asks for `PLATFORM_API_KEY` at sign-in. Configure the same `GITHUB_WEBHOOK_SECRET` in the GitHub webhook settings; GitHub then signs each delivery, and invalid signatures are rejected. The API and database ports bind to localhost. Use HTTPS when exposing the dashboard remotely.
+All ports bind to `127.0.0.1` only: dashboard `3000`, API `8000`, PostgreSQL `5433` (to avoid clashing with a local instance). Use HTTPS when exposing the dashboard remotely.
 
-### Docker Compose Ports
+<details>
+<summary><b>Database schema</b></summary>
 
-| Service    | Internal Port | External Port |
-|------------|---------------|---------------|
-| Dashboard  | 3000          | localhost:3000 |
-| API        | 8000          | localhost:8000 |
-| PostgreSQL | 5432          | localhost:5433 |
+<br/>
 
-> PostgreSQL is bound to localhost on host port `5433`, avoiding conflicts with a local instance.
+```
+organizations └── repositories └── scans └── findings
+```
+
+| Field         | Description                                 |
+|---------------|---------------------------------------------|
+| `tool`        | `sectl` or `gitleaks`                       |
+| `rule_id`     | e.g. `K8S-001`, `TF-IAM-001`                |
+| `severity`    | `CRITICAL`, `HIGH`, `MEDIUM`, `LOW`         |
+| `category`    | e.g. `rbac`, `network`, `secrets`           |
+| `title`       | Short rule description                      |
+| `description` | Full explanation of the violation           |
+| `file_path`   | Path of the affected file                   |
+| `remediation` | How to fix it                               |
+
+</details>
 
 ---
 
-## Running Tests
+## 🧪 Tests
 
 ```bash
-# Unit tests for SecTL scanners
-cd sectl
-go test ./internal/scanner/... -v
+# SecTL unit tests
+cd sectl && go test -race ./...
 
-# Run with race condition detection
-go test -race ./internal/...
+# API security tests
+pip install -r platform/api/requirements.txt
+python -m unittest discover -s platform/api/tests
 
-# Test against sample manifests
+# Try SecTL on the bundled fixtures (bad-* files trigger rules, good-* files are clean)
 sectl scan ./sectl/testdata/k8s --type k8s
 sectl scan ./sectl/testdata/terraform --type terraform
 ```
 
-**Included test data:**
-
-| File                                  | Purpose                          |
-|---------------------------------------|----------------------------------|
-| `testdata/k8s/bad-deployment.yaml`    | Triggers K8S rules               |
-| `testdata/k8s/good-deployment.yaml`   | Expected to produce zero findings |
-| `testdata/terraform/bad-infra.tf`     | Triggers Terraform rules         |
-| `testdata/terraform/good-infra.tf`    | Expected to produce zero findings |
-
 ---
 
-## Project Structure
+## 📁 Project Structure
 
 ```
 ZeroTrustOps-Platform/
-├── setup.sh                        # One-command installer
-├── uninstall.sh                    # Complete cleanup script
-├── docker-compose.yml              # Service orchestration
-│
-├── sectl/                          # Security CLI (Go)
-│   ├── main.go
-│   ├── cmd/                        # scan, audit, verify, rules commands
-│   │   ├── audit.go
-│   │   ├── helpers.go
-│   │   ├── root.go
-│   │   ├── rules.go
-│   │   ├── scan.go
-│   │   └── verify.go
-│   └── internal/
-│       ├── scanner/                # K8s, Terraform, Helm analyzers and unit tests
-│       │   ├── finding.go
-│       │   ├── helm.go
-│       │   ├── k8s.go
-│       │   ├── k8s_test.go
-│       │   ├── terraform.go
-│       │   └── terraform_test.go
-│       ├── posture/                # Live AWS account audit
-│       │   └── aws.go
-│       ├── supply/                 # Container image supply chain checks
-│       │   └── chain.go
-│       └── report/                 # Table, JSON, SARIF output renderers
-│           └── render.go
-│
+├── setup.sh · uninstall.sh · docker-compose.yml
+├── sectl/                    # Go security CLI
+│   ├── cmd/                  #   scan, audit, verify, rules
+│   ├── internal/
+│   │   ├── scanner/          #   K8s, Terraform, Helm analyzers + tests
+│   │   ├── posture/          #   live AWS audit
+│   │   ├── supply/           #   container supply-chain checks
+│   │   └── report/           #   table, JSON, SARIF renderers
+│   └── testdata/             #   good / bad fixtures
 ├── platform/
-│   ├── api/                        # FastAPI backend
-│   │   ├── main.py                 # Webhook handler, scan engine, REST API
-│   │   ├── requirements.txt
-│   │   └── Dockerfile
-│   ├── web/                        # React dashboard
-│   │   ├── src/
-│   │   │   ├── pages/
-│   │   │   │   ├── Dashboard.jsx
-│   │   │   │   ├── Repositories.jsx
-│   │   │   │   ├── ScanDetail.jsx
-│   │   │   │   ├── Scans.jsx
-│   │   │   │   └── Setup.jsx
-│   │   │   ├── components/
-│   │   │   │   └── Layout.jsx
-│   │   │   ├── App.jsx
-│   │   │   └── main.jsx
-│   │   └── Dockerfile
-│   └── db/
-│       └── init.sql                # PostgreSQL schema
-│
-└── manifests/
-    ├── dev/                        # Hardened Kubernetes deployment example
-    │   ├── deployment.yaml
-    │   └── service.yaml
-    └── kyverno-policies/           # Admission control enforcement policies
-        ├── disallow-latest-tag.yaml
-        ├── disallow-privileged.yaml
-        └── require-resource-limits.yaml
+│   ├── api/                  # FastAPI backend + tests
+│   ├── web/                  # React dashboard (Vite, served by nginx)
+│   └── db/init.sql           # PostgreSQL schema
+├── manifests/
+│   ├── dev/                  # hardened Kubernetes deployment example
+│   └── kyverno-policies/     # admission control policies
+├── docs/                     # static project site
+└── screenshots/
 ```
+
+The static site in `docs/` can be published with the **Deploy Docs Site** workflow. It only runs manually: enable GitHub Pages (**Settings → Pages → Source: GitHub Actions**), then click **Run workflow** in the Actions tab.
 
 ---
 
-## Roadmap
+## 🗺️ Roadmap
 
-- [ ] GitHub commit status API — report PASS/FAIL directly on pull requests
-- [ ] Slack and Microsoft Teams webhook notifications
-- [ ] Trivy container image vulnerability scanning
+- [ ] Report PASS / FAIL on pull requests through the commit status API
+- [ ] Slack and Microsoft Teams notifications
+- [ ] Trivy image vulnerability scanning
 - [ ] Falco runtime threat detection
-- [ ] SARIF upload to GitHub Advanced Security via API
-- [ ] Multi-organization support
-- [ ] Prometheus metrics endpoint (`/metrics`)
-- [ ] Role-based access control for multi-team environments
+- [ ] SARIF upload to GitHub Advanced Security
+- [ ] Multi-organization support and RBAC
+- [ ] Prometheus `/metrics` endpoint
 - [ ] GitLab webhook support
 
 ---
 
-## Contributing
+## 🤝 Contributing
 
-Contributions are welcome. To get started:
-
-```bash
-# Fork and clone
-git clone https://github.com/<your-handle>/ZeroTrustOps-Platform.git
-cd ZeroTrustOps-Platform
-
-# Create a feature branch
-git checkout -b feature/my-new-rule
-
-# Add your rule in sectl/internal/scanner/
-# Add a test in the corresponding _test.go file
-# Add test fixtures in sectl/testdata/
-
-# Run tests
-go test ./...
-
-# Submit a pull request
-```
-
-**Adding a new SecTL rule:** Refer to `sectl/internal/scanner/k8s.go` or `terraform.go` for existing patterns. Each rule requires a `RuleID`, `Severity`, `Title`, `Description`, and `Remediation` field.
+1. Fork the repository and create a branch: `git checkout -b feature/my-new-rule`
+2. Add your rule in `sectl/internal/scanner/` (each rule needs a `RuleID`, `Severity`, `Title`, `Description` and `Remediation`)
+3. Add a test in the matching `_test.go` file and fixtures in `sectl/testdata/`
+4. Run `go test ./...` and open a pull request
 
 ---
 
-## License
+<div align="center">
 
 Distributed under the [MIT License](LICENSE).
----
 
-**Maintainer:** Roudayna Kouka — [github.com/roudayn-kouka](https://github.com/roudayn-kouka)
+Made by **Roudayna Kouka** · [github.com/roudayn-kouka](https://github.com/roudayn-kouka)
+
+</div>
