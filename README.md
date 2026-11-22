@@ -23,8 +23,9 @@ then returns a clear **PASS / FAIL** verdict before anything reaches production.
 
 <br/>
 
-<img src="screenshots/DashboardView.png" alt="ZeroTrustOps dashboard" width="90%"/>
-
+<p align="center">
+  <img src="docs/zerotrustops-platform-architecture-devsecops.gif" alt="Architecture du projet" width="900">
+</p>
 </div>
 
 ---
